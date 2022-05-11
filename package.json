@@ -1,0 +1,27 @@
+{
+    "name": "realmeyeapi",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/IsaacLaquerre/realmeyeApi.git"
+    },
+    "keywords": [],
+    "author": "",
+    "type": "module",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/IsaacLaquerre/realmeyeApi/issues"
+    },
+    "homepage": "https://github.com/IsaacLaquerre/realmeyeApi#readme",
+    "dependencies": {
+        "cheerio": "^1.0.0-rc.10",
+        "clear-console": "^1.1.0",
+        "nodemon": "^2.0.16",
+        "request": "^2.88.2"
+    }
+}
