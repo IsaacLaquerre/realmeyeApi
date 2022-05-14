@@ -320,8 +320,6 @@ app.get("/wiki/:query", async(req, res) => {
                         sprite = "https:" + $("div.wiki-page img.img-responsive").filter((i, element) => element.attribs && element.attribs.src && element.attribs.src.split("/")[element.attribs.src.split("/").length - 1].split(".")[0].replace(/%20/g, " ") === name)[0].attribs.src;
                     }
 
-                    console.log(sprite, type);
-
                     var fields = [];
 
                     if (type === "item") {
@@ -401,8 +399,6 @@ app.get("/wiki/:query", async(req, res) => {
                     };
 
                     var soulbound = false;
-
-                    console.log(fields);
 
                     while (fields[i][0] != "Obtained Through") {
                         if (fields[i][0] === "Tier") data.tier = (isNaN(fields[i][1]) ? fields[i][1] : parseInt(fields[i][1]));
