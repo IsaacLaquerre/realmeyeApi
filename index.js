@@ -405,7 +405,7 @@ app.get("/wiki/:query", async(req, res) => {
                         if (fields[i][0] === "On Equip") data.onEquip = fields[i][1];
                         if (fields[i][0] === "XP Bonus") data.xpBonus = fields[i][1];
                         if (fields[i][0] === "Soulbound") soulbound = true;
-                        if (fields[i][0] === "Feed Power") data.feedPower = parseInt(fields[i][1]);
+                        if (fields[i][0] === "Feed Power") data.feedPower = parseInt(fields[i][1].replace(/,/g, ""));
                         if (fields[i][0] === "Loot Bag") data.lootBag = $("div.table-responsive tbody tr td img.img-responsive").filter((i, element) => element.attribs && element.attribs.title && element.attribs.title.includes("Assigned to"))[0].attribs.title.split("Assigned to ")[1].toLowerCase().split(" ")[0];
                         if (fields[i][0] === "Drops From" || fields[i][0] === "Tier Grouped Drops") {
                             data.dropsFrom = fields[i].slice(1).filter(field => !field.includes("\n"));
