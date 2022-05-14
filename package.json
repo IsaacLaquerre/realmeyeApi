@@ -4,7 +4,7 @@
     "description": "",
     "main": "index.js",
     "scripts": {
-        "start": "npm install --save; node ."
+        "start": "node ."
     },
     "repository": {
         "type": "git",
@@ -21,6 +21,7 @@
     "dependencies": {
         "cheerio": "^1.0.0-rc.10",
         "clear-console": "^1.1.0",
+        "node": "^17.7.2",
         "nodemon": "^2.0.16",
         "request": "^2.88.2"
     }
