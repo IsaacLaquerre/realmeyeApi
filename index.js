@@ -261,12 +261,15 @@ app.get("/graveyard/:username", async(req, res) => {
                 status: "ok",
                 data: data
             });
-        }
+        } else return res.send({
+            status: "error",
+            error: err
+        });
     });
 });
 
 app.get("/wiki/:query", async(req, res) => {
-    if (!req.params || !req.params.username) return res.send({
+    if (!req.params || !req.params.query) return res.send({
         status: "error",
         error: "Missing parameters"
     });
@@ -277,7 +280,9 @@ app.get("/wiki/:query", async(req, res) => {
         itemList = response;
     });
 
-    request(endpoints.wiki + req.params.query, {
+    var query = req.params.query.replace(/-/g, " ").toLowerCase();
+
+    request(endpoints.wiki + query, {
         method: "GET",
         headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"
@@ -287,8 +292,148 @@ app.get("/wiki/:query", async(req, res) => {
 
             var $ = cheerio.load(body);
 
-            return res.send({
-                status: "ok"
+            if ($("div.col-md-9 p.wiki-search-result").length === 0) return res.send({
+                status: "error",
+                error: "Couldn't find wiki page for query '" + req.params.query.replace(/-/g, " ") + "'"
+            });
+
+            var wikiUrl = "https://www.realmeye.com" + ($("div.col-md-9 p.wiki-search-result").first().children()[0].attribs.href);
+
+            request(wikiUrl, {
+                method: "GET",
+                headers: {
+                    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/68.0.3440.106 Safari/537.36"
+                }
+            }, (err2, response2, body2) => {
+                if (!err2 && response2.statusCode === 200) {
+
+                    var $ = cheerio.load(body2);
+
+                    var name = $("div.col-md-12 h1").text();
+
+                    var type = "item";
+
+                    try {
+                        var sprite = "https:" + $("div.wiki-page img.img-responsive").filter((i, element) => element.attribs && element.attribs.title && element.attribs.title === name)[0].attribs.src;
+                    } catch (err) {
+                        type = "enemy";
+                        sprite = "https:" + $("div.wiki-page img.img-responsive").filter((i, element) => element.attribs && element.attribs.src && element.attribs.src.split("/")[element.attribs.src.split("/").length - 1].split(".")[0].replace(/%20/g, " ") === name)[0].attribs.src;
+                    }
+
+                    console.log(sprite, type);
+
+                    var fields = [];
+
+                    if (type === "item") {
+                        $("div.table-responsive tbody tr").each((i, element) => {
+                            var field = [];
+                            element.children.forEach(child => {
+                                if (child.children != undefined) {
+                                    child.children.forEach(child => {
+                                        if (child.children === undefined) {
+                                            if (child.data && child.data != "\n") field.push(child.data);
+                                        } else {
+                                            child.children.forEach(child => {
+                                                if (child.data != undefined && child.data != "\n") field.push(child.data);
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    if (child.data != "\n") field.push(child.data);
+                                }
+                            });
+                            fields.push(field);
+                        });
+                    } else if (type === "enemy") {
+                        $("div.wiki-page p").each((i, element) => {
+                            var field = [];
+                            element.children.forEach(child => {
+                                if (child.children != undefined) {
+                                    child.children.forEach(child => {
+                                        if (child.children === undefined) {
+                                            if (child.data && child.data != "\n") field.push(child.data);
+                                        } else {
+                                            child.children.forEach(child => {
+                                                if (child.data != undefined && child.data != "\n") field.push(child.data);
+                                            });
+                                        }
+                                    });
+                                } else {
+                                    if (child.data != "\n") field.push(child.data);
+                                }
+                            });
+                            fields.push(field);
+                        });
+                    }
+
+                    var description = (type === "item" ? fields[0].slice(1) : fields[0].join(""));
+                    var i = 1;
+                    var reskins = [];
+                    var reskinOf = [];
+                    if (fields[1].includes("Reskin(s)")) {
+                        i = 2;
+                        while (fields[i][0] !== "Tier") {
+                            let name = fields[i][0].split(". ")[1];
+                            reskins.push({
+                                name: name,
+                                tier: fields[i][0].split(". ")[0],
+                                wikiUrl: "https://www.realmeye.com" + $("div.table-responsive tbody tr td a").filter((i, element) => element.children[0] && element.children[0].attribs && element.children[0].attribs.title && element.children[0].attribs.title === name)[0].attribs.href
+                            });
+                            i++;
+                        }
+                    } else if (fields[1].includes("Reskin of")) {
+                        i = 2;
+                        while (fields[i][0] !== "Tier") {
+                            let name = fields[i][0].split(". ")[1];
+                            reskinOf.push({
+                                name: name,
+                                tier: fields[i][0].split(". ")[0],
+                                wikiUrl: "https://www.realmeye.com" + $("div.table-responsive tbody tr td a").filter((i, element) => element.children[0] && element.children[0].attribs && element.children[0].attribs.title && element.children[0].attribs.title === name)[0].attribs.href
+                            });
+                            i++;
+                        }
+                    }
+
+                    var data = {
+                        name: name,
+                        sprite: sprite,
+                        description: description,
+                    };
+
+                    var soulbound = false;
+
+                    console.log(fields);
+
+                    while (fields[i][0] != "Obtained Through") {
+                        if (fields[i][0] === "Tier") data.tier = (isNaN(fields[i][1]) ? fields[i][1] : parseInt(fields[i][1]));
+                        if (fields[i][0] === "On Equip") data.onEquip = fields[i][1];
+                        if (fields[i][0] === "XP Bonus") data.xpBonus = fields[i][1];
+                        if (fields[i][0] === "Soulbound") soulbound = true;
+                        if (fields[i][0] === "Feed Power") data.feedPower = parseInt(fields[i][1]);
+                        if (fields[i][0] === "Loot Bag") data.lootBag = $("div.table-responsive tbody tr td img.img-responsive").filter((i, element) => element.attribs && element.attribs.title && element.attribs.title.includes("Assigned to"))[0].attribs.title.split("Assigned to ")[1].toLowerCase().split(" ")[0];
+                        if (fields[i][0] === "Drops From" || fields[i][0] === "Tier Grouped Drops") {
+                            data.dropsFrom = fields[i].slice(1).filter(field => !field.includes("\n"));
+                            data.dropsFrom.forEach(field => {
+                                if (field.startsWith(" ")) data.dropsFrom[data.dropsFrom.indexOf(field)] = field.slice(1);
+                                field.trim();
+                            });
+                        }
+                        i++;
+                    }
+
+                    if (reskins.length != 0) data.reskins = reskins;
+                    if (reskinOf.length != 0) data.reskinOf = reskinOf;
+                    if (soulbound) data.soulbound = true;
+                    else data.soulbound = false;
+
+                    return res.send({
+                        status: "ok",
+                        data: data
+                    });
+                } else return res.send({
+                    status: "error",
+                    error: err2
+                });
             });
         }
     });
