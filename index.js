@@ -6,7 +6,7 @@ import utils from "./utils.js";
 
 var app = express();
 
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
 
 var endpoints = {
     "player": "https://www.realmeye.com/player/",
