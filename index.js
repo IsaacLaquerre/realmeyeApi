@@ -268,7 +268,7 @@ app.get("/graveyard/:username", async(req, res) => {
     });
 });
 
-app.get("/wiki/:query", async(req, res) => {
+/*app.get("/wiki/:query", async(req, res) => {
     if (!req.params || !req.params.query) return res.send({
         status: "error",
         error: "Missing parameters"
@@ -433,4 +433,4 @@ app.get("/wiki/:query", async(req, res) => {
             });
         }
     });
-});
+});*/
