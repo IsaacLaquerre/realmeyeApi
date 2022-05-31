@@ -91,7 +91,7 @@ app.get("/player/:username", async(req, res) => {
             }
 
             var description = [];
-            var bio = $("div.container div.description");
+            var bio = $("div.container div.well.description");
             bio.children().each((i, child) => {
                 description.push(child.children[0].data.replace("If this is your character, then you can add some description here, when you are logged in to RealmEye.", username + " has no description yet."));
             });
